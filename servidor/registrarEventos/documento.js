@@ -21,7 +21,7 @@ function registrarEventosDocumento(socket, io) {
 
         const usuariosNoDocumento = obterUsuariosNoDocumento(nomeDocumento);
 
-        console.log(usuariosNoDocumento);
+        io.to(nomeDocumento).emit("usuarios_no_documento", usuariosNoDocumento);
 
         devolverTexto(documento.texto);
       }
