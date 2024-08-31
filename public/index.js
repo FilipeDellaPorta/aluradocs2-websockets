@@ -3,7 +3,7 @@ import { obterCookie, removerCookie } from "./utils/cookies.js";
 
 const tokenJwt = obterCookie("tokenJwt");
 
-console.log(tokenJwt);
+//console.log(tokenJwt);
 
 const listaDocumentos = document.getElementById("lista-documentos");
 const form = document.getElementById("form-adiciona-documento");
