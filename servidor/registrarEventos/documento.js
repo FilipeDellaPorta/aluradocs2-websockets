@@ -5,6 +5,7 @@ import {
 } from "../db/documentosDb.js";
 import {
   adicionarConexao,
+  encontrarConexao,
   obterUsuariosNoDocumento,
   removerConexao,
 } from "../utils/conexoesDocumentos.js";
@@ -16,15 +17,28 @@ function registrarEventosDocumento(socket, io) {
       const documento = await encontrarDocumento(nomeDocumento);
 
       if (documento) {
-        socket.join(nomeDocumento);
+        const conexaoEncontrada = encontrarConexao(nomeDocumento, nomeUsuario);
 
-        adicionarConexao({ nomeDocumento, nomeUsuario });
+        if (!conexaoEncontrada) {
+          socket.join(nomeDocumento);
 
-        const usuariosNoDocumento = obterUsuariosNoDocumento(nomeDocumento);
+          adicionarConexao({ nomeDocumento, nomeUsuario });
 
-        io.to(nomeDocumento).emit("usuarios_no_documento", usuariosNoDocumento);
+          socket.data = {
+            usuarioEntrou: true,
+          };
 
-        devolverTexto(documento.texto);
+          const usuariosNoDocumento = obterUsuariosNoDocumento(nomeDocumento);
+
+          io.to(nomeDocumento).emit(
+            "usuarios_no_documento",
+            usuariosNoDocumento
+          );
+
+          devolverTexto(documento.texto);
+        } else {
+          socket.emit("usuario_ja_no_documento");
+        }
       }
 
       socket.on("texto_editor", async ({ texto, nomeDocumento }) => {
@@ -44,10 +58,15 @@ function registrarEventosDocumento(socket, io) {
       });
 
       socket.on("disconnect", () => {
-        removerConexao(nomeDocumento, nomeUsuario);
+        if (socket.data.usuarioEntrou) {
+          removerConexao(nomeDocumento, nomeUsuario);
 
-        const usuariosNoDocumento = obterUsuariosNoDocumento(nomeDocumento);
-        io.to(nomeDocumento).emit("usuarios_no_documento", usuariosNoDocumento);
+          const usuariosNoDocumento = obterUsuariosNoDocumento(nomeDocumento);
+          io.to(nomeDocumento).emit(
+            "usuarios_no_documento",
+            usuariosNoDocumento
+          );
+        }
       });
     }
   );
